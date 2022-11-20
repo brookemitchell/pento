@@ -1,24 +1,23 @@
 defmodule PentoWeb.WrongLive do
   use Phoenix.LiveView, layout: {PentoWeb.LayoutView, "live.html"}
 
-  def mount(_params, _session, socket) do
-    :timer.send_interval(10000, self(), :get_time)
-
+  def mount(_params, session, socket) do
     {:ok,
      assign(
        socket,
        score: 0,
-       correct_number: "#{:rand.uniform(10)}",
-       message: "Make a guess: "
+       message: "Guess a number.",
+       session_id: session["live_socket_id"],
+       correct_number: "#{:rand.uniform(10)}"
      )}
   end
 
   def handle_event(
         "guess",
         %{"numbers" => guess},
-        %{assigns: %{correct_number: cor_num}} = socket
+        %{assigns: %{correct_number: correct_number}} = socket
       )
-      when guess == cor_num do
+      when guess == correct_number do
     {message, score} = {
       "Great guess: #{guess}. Correct!",
       socket.assigns.score + 1
@@ -55,12 +54,15 @@ defmodule PentoWeb.WrongLive do
     <h1> Your Score: <%= @score %> </h1>
     <h2>
       <%= @message %>
-      Correct <%= @correct_number %>
     </h2>
     <h2>
       <%= for n <- 1..10 do %>
         <a href="#" phx-click="guess" phx-value-numbers={n} ><%= n %> </a>
       <% end %>
+      <pre>
+        <%= @current_user.email %>
+        <%= @session_id %>
+      </pre>
     </h2>
     """
   end
