@@ -31,7 +31,8 @@ defmodule Pento.Accounts.User do
   """
   def registration_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email, :password])
+    |> cast(attrs, [:username, :email, :password])
+    |> validate_username()
     |> validate_email()
     |> validate_password(opts)
   end
@@ -55,6 +56,13 @@ defmodule Pento.Accounts.User do
     |> maybe_hash_password(opts)
   end
 
+  defp validate_username(changeset) do
+    changeset
+    |> validate_required([:username])
+    |> validate_length(:username, min: 4, max: 80)
+    |> unique_constraint(:username)
+  end
+
   defp maybe_hash_password(changeset, opts) do
     hash_password? = Keyword.get(opts, :hash_password, true)
     password = get_change(changeset, :password)
@@ -67,6 +75,21 @@ defmodule Pento.Accounts.User do
       |> delete_change(:password)
     else
       changeset
+    end
+  end
+
+  @doc """
+  A user changeset for changing the username.
+
+  It requires the username to change otherwise an error is added.
+  """
+  def username_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:username])
+    |> validate_username()
+    |> case do
+      %{changes: %{username: _}} = changeset -> changeset
+      %{} = changeset -> add_error(changeset, :username, "did not change")
     end
   end
 

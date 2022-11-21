@@ -81,6 +81,19 @@ defmodule Pento.Accounts do
   end
 
   @doc """
+  Returns an `%Ecto.Changeset{}` for changing the user email.
+
+  ## Examples
+
+      iex> change_user_username(user)
+      %Ecto.Changeset{data: %User{}}
+
+  """
+  def change_user_username(user, attrs \\ %{}) do
+    User.username_changeset(user, attrs)
+  end
+
+  @doc """
   Returns an `%Ecto.Changeset{}` for tracking user changes.
 
   ## Examples
@@ -126,6 +139,29 @@ defmodule Pento.Accounts do
     |> User.email_changeset(attrs)
     |> User.validate_current_password(password)
     |> Ecto.Changeset.apply_action(:update)
+  end
+
+  @doc """
+  Updates the user username using the given token.
+
+  If the token matches, the user username is updated and the token is deleted.
+  The confirmed_at date is also updated to the current time.
+  """
+  def update_user_username(user, attrs) do
+    changeset =
+      user
+      |> User.username_changeset(attrs)
+
+    IO.inspect(changeset, label: "account changeset")
+
+    Ecto.Multi.new()
+    |> Ecto.Multi.update(:username, changeset)
+    |> Ecto.Multi.delete_all(:tokens, UserToken.user_and_contexts_query(user, :all))
+    |> Repo.transaction()
+    |> case do
+      {:ok, _} -> :ok
+      {:error, :user, changeset, _} -> {:error, changeset}
+    end
   end
 
   @doc """

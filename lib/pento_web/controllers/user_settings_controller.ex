@@ -10,6 +10,23 @@ defmodule PentoWeb.UserSettingsController do
     render(conn, "edit.html")
   end
 
+  def update(conn, %{"action" => "update_username"} = params) do
+    %{"user" => user_params} = params
+    user = conn.assigns.current_user
+
+    case Accounts.update_user_username(user, user_params) do
+      :ok ->
+        conn
+        |> put_flash(:info, "Username changed successfully.")
+        |> redirect(to: Routes.user_settings_path(conn, :edit))
+
+      {:error, changeset} ->
+        render(conn, "edit.html", email_changeset: changeset)
+    end
+
+    conn
+  end
+
   def update(conn, %{"action" => "update_email"} = params) do
     %{"current_password" => password, "user" => user_params} = params
     user = conn.assigns.current_user
@@ -68,6 +85,7 @@ defmodule PentoWeb.UserSettingsController do
     user = conn.assigns.current_user
 
     conn
+    |> assign(:username_changeset, Accounts.change_user_username(user))
     |> assign(:email_changeset, Accounts.change_user_email(user))
     |> assign(:password_changeset, Accounts.change_user_password(user))
   end
