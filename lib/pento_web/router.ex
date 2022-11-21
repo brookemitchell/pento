@@ -76,7 +76,7 @@ defmodule PentoWeb.Router do
     pipe_through [:browser, :require_authenticated_user]
 
     live_session :default, on_mount: PentoWeb.UserAuthLive do
-      live "guess", WrongLive
+      live "guess", WrongLive, :show
     end
 
     get "/users/settings", UserSettingsController, :edit
